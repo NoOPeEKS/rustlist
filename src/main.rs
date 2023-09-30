@@ -1,5 +1,6 @@
 #![allow(unused)]
 use clap::Parser;
+use reqwest::StatusCode;
 
 #[derive(Parser)]
 struct Cli{
@@ -23,10 +24,10 @@ async fn main() {
         let url = format!("{}/{}", args.url, line);
         let response = reqwest::get(url)
             .await
-            .unwrap()
-            .text()
-            .await;
-        println!("{:?}", response);
+            .unwrap();
+        if response.status() == StatusCode::OK{
+            println!("200 OK at /{line}");
+        }
     }
     
 }
