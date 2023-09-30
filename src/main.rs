@@ -3,13 +3,16 @@ use clap::Parser;
 use reqwest::StatusCode;
 use rustlist::get_dict_line;
 use colored::Colorize;
+use rayon::prelude::*;
+use rayon::ThreadPoolBuilder;
+use std::{fs, fmt::format};
 
 #[derive(Parser)]
 struct Cli{
     url: String,
     dictionary_path: String,
+    num_threads: usize,
 }
-use std::{fs, fmt::format};
 
 #[tokio::main]
 async fn main() {
@@ -22,16 +25,17 @@ async fn main() {
     
     let directories: Vec<&str> = rustlist::get_dict_line(&directories);
 
-    for line in directories {
-        let url = format!("{}/{}", args.url, line);
-        let response = reqwest::get(url)
-            .await
-            .unwrap();
-        if response.status() == StatusCode::OK{
-            println!("{} ============> /{}", "200 OK".green(), line.yellow());
-        }
+    let pool = ThreadPoolBuilder::new().num_threads(args.num_threads).build().unwrap();
 
-    }
+    pool.install(|| {
+        directories.par_iter().for_each(|line| {
+            let url = format!("{}/{}", args.url, line);
+            let response = reqwest::blocking::get(&url).unwrap();
+            if response.status() == StatusCode::OK {
+                println!("{} ============> /{}", "200 OK".green(), line.yellow());
+            }
+        });
+    });
     
 }
 
