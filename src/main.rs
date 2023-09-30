@@ -1,6 +1,8 @@
 #![allow(unused)]
 use clap::Parser;
 use reqwest::StatusCode;
+use rustlist::get_dict_line;
+use colored::Colorize;
 
 #[derive(Parser)]
 struct Cli{
@@ -18,7 +20,7 @@ async fn main() {
     let directories: String = fs::read_to_string(args.dictionary_path)
                                 .expect("Could not open dictionary!");
     
-    let directories: Vec<&str> = get_dict_line(&directories);
+    let directories: Vec<&str> = rustlist::get_dict_line(&directories);
 
     for line in directories {
         let url = format!("{}/{}", args.url, line);
@@ -26,18 +28,10 @@ async fn main() {
             .await
             .unwrap();
         if response.status() == StatusCode::OK{
-            println!("200 OK at /{line}");
+            println!("{} ============> /{}", "200 OK".green(), line.yellow());
         }
+
     }
     
 }
 
-fn get_dict_line<'a>(contents: &'a str) -> Vec<&'a str> {
-    let mut results: Vec<&str> = Vec::new();
-
-    for line in contents.lines() {
-            results.push(line);
-    }
-
-    return results;
-}
